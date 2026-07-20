@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f7f5" />
+  <meta name="description" content="Match your CV to a job description, score gaps, and generate a tailored resume — without inventing experience." />
+  <title>CV-JD Fit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4f7f5;
+      --bg-deep: #e7eee9;
+      --ink: #14201a;
+      --muted: #5a6b62;
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-solid: #ffffff;
+      --line: rgba(20, 32, 26, 0.1);
+      --accent: #0d7377;
+      --accent-ink: #085457;
+      --accent-soft: rgba(13, 115, 119, 0.12);
+      --ok: #1f7a4c;
+      --ok-soft: rgba(31, 122, 76, 0.12);
+      --warn: #b86e00;
+      --warn-soft: rgba(184, 110, 0, 0.12);
+      --err: #b42318;
+      --err-soft: rgba(180, 35, 24, 0.1);
+      --ring-track: #d5e0da;
+      --shadow: 0 18px 50px rgba(20, 32, 26, 0.08);
+      --radius: 18px;
+      --font: "Figtree", "PingFang SC", "Noto Sans SC", sans-serif;
+      --display: "Fraunces", "Songti SC", Georgia, serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --max: 1120px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background:
+        radial-gradient(70% 55% at 0% 0%, rgba(13, 115, 119, 0.14), transparent 55%),
+        radial-gradient(50% 40% at 100% 10%, rgba(31, 122, 76, 0.1), transparent 50%),
+        linear-gradient(180deg, #f7faf8 0%, var(--bg) 40%, var(--bg-deep) 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(20, 32, 26, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 32, 26, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 75%);
+    }
+
+    .app {
+      position: relative;
+      max-width: var(--max);
+      margin: 0 auto;
+      min-height: 100dvh;
+      padding: calc(18px + var(--safe-top)) 18px calc(36px + var(--safe-bottom));
+    }
+
+    header.hero {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 22px;
+      animation: rise 0.55s ease both;
+    }
+
+    .brand {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: var(--ink);
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .tagline {
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.5;
+    }
+
+    .honesty {
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 4px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      max-width: 42rem;
+    }
+
+    .layout {
+      display: grid;
+      gap: 16px;
+    }
+
+    @media (min-width: 900px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+        align-items: start;
+        gap: 20px;
+      }
+      .col-results { position: sticky; top: 16px; }
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      animation: rise 0.6s ease both;
+    }
+
+    .panel:nth-child(2) { animation-delay: 0.05s; }
+    .panel:nth-child(3) { animation-delay: 0.1s; }
+
+    .panel h2 {
+      font-family: var(--display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    label .hint { font-weight: 400; font-size: 0.8rem; }
+
+    textarea, input[type="text"], input[type="password"], input[type="url"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-solid);
+      color: var(--ink);
+      font: inherit;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    textarea#cv { min-height: 180px; }
+    textarea#resume-out {
+      min-height: 280px;
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    textarea:focus, input:focus {
+      border-color: rgba(13, 115, 119, 0.55);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .file-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .file-btn {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .file-btn input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button, .file-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-ink); }
+
+    .btn-secondary {
+      background: var(--panel-solid);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: rgba(13, 115, 119, 0.35); }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    .settings-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    @media (min-width: 640px) {
+      .settings-grid {
+        grid-template-columns: 1.2fr 1fr 1fr;
+      }
+    }
+
+    details.settings > summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent-ink);
+      margin-bottom: 10px;
+      user-select: none;
+    }
+    details.settings > summary::-webkit-details-marker { display: none; }
+    details.settings > summary::after {
+      content: " ▾";
+      color: var(--muted);
+      font-size: 0.85em;
+    }
+    details.settings[open] > summary::after { content: " ▴"; }
+
+    .status {
+      min-height: 1.3em;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .status[data-kind="ok"] { color: var(--ok); }
+    .status[data-kind="warn"] { color: var(--warn); }
+    .status[data-kind="err"] { color: var(--err); }
+    .status[data-kind="busy"] { color: var(--accent); }
+
+    .score-block {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .ring {
+      --p: 0;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--ring-track) 0);
+      display: grid;
+      place-items: center;
+      position: relative;
+      animation: pop 0.45s ease both;
+    }
+
+    .ring::before {
+      content: "";
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      background: var(--panel-solid);
+    }
+
+    .ring-value {
+      position: relative;
+      font-family: var(--display);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .ring-label {
+      position: relative;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+      text-align: center;
+    }
+
+    .mode-pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .lists {
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (min-width: 640px) {
+      .lists { grid-template-columns: 1fr 1fr 1fr; }
+    }
+
+    .list-card h3 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .list-card.matched h3 { color: var(--ok); }
+    .list-card.weak h3 { color: var(--warn); }
+    .list-card.missing h3 { color: var(--err); }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 28px;
+    }
+
+    .chip {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      background: var(--bg-deep);
+      border: 1px solid var(--line);
+    }
+
+    .chip.matched { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+    .chip.weak { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+    .chip.missing { background: var(--err-soft); border-color: transparent; color: var(--err); }
+    .chip.empty { color: var(--muted); background: transparent; border-style: dashed; }
+
+    .edits {
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .edits li {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .edits .kind {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .export-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .placeholder {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      padding: 8px 0;
+    }
+
+    footer.note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      max-width: 48rem;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.92); opacity: 0.6; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <h1 class="brand">CV<span>-</span>JD Fit</h1>
+      <p class="tagline">Paste a job description and your resume. Get a fit score, gap list, and a tailored draft — facts only, never invented experience.</p>
+      <p class="honesty">Honesty guarantee: we only reorder and emphasize what is already in your CV. Missing JD skills stay as gaps.</p>
+    </header>
+
+    <div class="layout">
+      <div class="col-input">
+        <section class="panel">
+          <h2>1. Inputs</h2>
+          <div class="field">
+            <label for="cv">Your CV <span class="hint">paste or upload .txt / .md / .pdf</span></label>
+            <textarea id="cv" placeholder="Paste resume text (Markdown OK)…"></textarea>
+            <div class="file-row">
+              <label class="file-btn btn-secondary">
+                Upload file
+                <input id="cv-file" type="file" accept=".txt,.md,.markdown,.pdf,text/plain,text/markdown,application/pdf" />
+              </label>
+              <span id="file-status" class="status" style="margin:0"></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="jd">Job description</label>
+            <textarea id="jd" placeholder="Paste the JD (CN or EN)…"></textarea>
+          </div>
+
+          <details class="settings" id="settings-details">
+            <summary>API settings (optional LLM rewrite)</summary>
+            <div class="settings-grid">
+              <div class="field">
+                <label for="baseURL">Base URL</label>
+                <input id="baseURL" type="url" placeholder="https://api.openai.com/v1" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="apiKey">API key</label>
+                <input id="apiKey" type="password" placeholder="sk-…" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label for="model">Model</label>
+                <input id="model" type="text" placeholder="gpt-4o-mini" autocomplete="off" />
+              </div>
+            </div>
+            <div class="actions" style="margin-top:10px">
+              <button type="button" class="btn-secondary" id="save-settings">Save settings</button>
+              <button type="button" class="btn-ghost" id="clear-key">Clear key</button>
+            </div>
+            <p class="status" id="settings-status"></p>
+          </details>
+
+          <div class="actions">
+            <button type="button" class="btn-primary" id="analyze">Analyze &amp; tailor</button>
+            <button type="button" class="btn-secondary" id="analyze-only">Score only</button>
+          </div>
+          <p class="status" id="status" role="status"></p>
+        </section>
+      </div>
+
+      <div class="col-results">
+        <section class="panel" id="report-panel">
+          <h2>2. Fit report</h2>
+          <div id="report-empty" class="placeholder">Run analysis to see your score ring, matched skills, and gaps.</div>
+          <div id="report" hidden>
+            <div class="score-block">
+              <div class="ring" id="score-ring" style="--p:0">
+                <div>
+                  <div class="ring-value" id="score-value">0</div>
+                  <div class="ring-label">fit</div>
+                </div>
+              </div>
+              <div>
+                <p id="score-blurb" class="placeholder" style="padding:0"></p>
+                <span class="mode-pill" id="mode-pill">rules</span>
+              </div>
+            </div>
+            <div class="lists">
+              <div class="list-card matched">
+                <h3>Matched</h3>
+                <div class="chips" id="matched-chips"></div>
+              </div>
+              <div class="list-card weak">
+                <h3>Weak</h3>
+                <div class="chips" id="weak-chips"></div>
+              </div>
+              <div class="list-card missing">
+                <h3>Missing</h3>
+                <div class="chips" id="missing-chips"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="edits-panel">
+          <h2>3. Edit suggestions</h2>
+          <div id="edits-empty" class="placeholder">Suggestions appear after you analyze.</div>
+          <ul class="edits" id="edits-list" hidden></ul>
+        </section>
+
+        <section class="panel" id="resume-panel">
+          <h2>4. Tailored resume</h2>
+          <div id="resume-empty" class="placeholder">A Markdown draft you can edit, copy, or download. Experience lines stay factual.</div>
+          <div id="resume-wrap" hidden>
+            <textarea id="resume-out" aria-label="Tailored resume markdown"></textarea>
+            <div class="export-row">
+              <button type="button" class="btn-primary" id="copy-resume">Copy</button>
+              <button type="button" class="btn-secondary" id="download-resume">Download .md</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="note">
+      PDF upload uses a lightweight text extract (works best with text-layer PDFs). Scanned/image PDFs may fail — paste text instead.
+      Settings are stored in this browser/device via localStorage. Web preview: <code>npm start</code>. Android APK: <code>npm run apk:debug</code>.
+    </footer>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

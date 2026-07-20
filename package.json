@@ -1,0 +1,26 @@
+{
+  "name": "cv-jd-fit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CV–JD fit: match resume to job description, score gaps, generate tailored resume. Web + Android APK.",
+  "scripts": {
+    "build": "node scripts/build-web.js",
+    "start": "npm run build && npx --yes serve www -p 5192",
+    "test": "node --test test/*.test.js",
+    "cap": "node node_modules/@capacitor/cli/bin/capacitor",
+    "sync:android": "npm run build && npm run cap -- sync android",
+    "open:android": "npm run cap -- open android",
+    "apk:debug": "npm run sync:android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./android/gradlew -p android assembleDebug",
+    "mobile:android": "npm run sync:android && npm run open:android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "esbuild": "^0.24.2"
+  }
+}
