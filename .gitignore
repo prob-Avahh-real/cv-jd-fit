@@ -8,3 +8,15 @@ android/build/
 android/local.properties
 *.apk
 *.aab
+
+# Build, cache & secret exclusions
+.env
+.env.*
+!.env.example
+.npm-cache/
+.build/
+DerivedData/
+.gradle/
+__pycache__/
+.venv/
+*.ipa
